@@ -4,7 +4,6 @@ import logging
 import time
 import requests
 
-notified = []
 ifttt_key = None
 ifttt_event = None
 ifttt = None
@@ -42,14 +41,9 @@ def init(cbpi):
 	else:
 		ifttt = "OK"
 
-
-@cbpi.backgroundtask(key="check_notification", interval=1)
-def check_notification():
-	if ifttt is not None:
-		for idx, m in enumerate(cbpi.cache.get("messages", [])):
-			if (m.get("id") not in notified):
-				report = {}
-				report["value1"] = m.get("headline")
-				report["value2"] = m.get("message")
-				requests.post("https://maker.ifttt.com/trigger/{}/with/key/{}".format(ifttt_event, ifttt_key), data=report)
-				notified.append(m.get("id"))
+@cbpi.event("MESSAGE", async=True)
+def messageEvent(message):
+	report = {}
+	report["value1"] = message["headline"]
+	report["value2"] = message["message"]
+	requests.post("https://maker.ifttt.com/trigger/{}/with/key/{}".format(ifttt_event, ifttt_key), data=report)
